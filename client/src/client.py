@@ -14,7 +14,7 @@ sock.connect(socket_address)
 
 try:
 	while 1:
-		# wait for input
+		# wait for command line input
 		cmd_line_input = input()
 		if cmd_line_input == 'close':
 			break
