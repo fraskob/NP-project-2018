@@ -14,13 +14,12 @@ sock.connect(socket_address)
 
 try:
 	while 1:
-		msg = sock.recv(1023).decode('utf-8')
-		print("Client: %s" % msg)
-
 		# wait for command line input
 		cmd_line_input = input()
 		if cmd_line_input == 'close':
 			break
+		else:
+			sock.send(cmd_line_input.encode())
 finally:
 	# close connection
 	sock.close()
