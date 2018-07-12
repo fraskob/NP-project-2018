@@ -2,6 +2,18 @@
 
 import sys
 import socket
+import threading
+
+from time import sleep
+
+CONST_HEARTBEAT_RATE = 5
+CONST_HEARTBEAT = '/lifetime.reset()'
+
+def heartbeat(sock):
+	while 1:
+		sock.send(CONST_HEARTBEAT.encode())
+		sleep(CONST_HEARTBEAT_RATE)
+		print('hearbeat')
 
 # commandline input
 target_host = sys.argv[1]
@@ -11,6 +23,8 @@ target_port = int(sys.argv[2])
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 socket_address = (target_host, target_port)
 sock.connect(socket_address)
+
+threading.Thread(target=heartbeat, args=(sock,)).start()
 
 try:
 	while 1:
