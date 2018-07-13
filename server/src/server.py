@@ -3,13 +3,16 @@
 import socket
 import sys
 import threading
+import os
 
 from time import sleep
+from socket import SHUT_RDWR
 
 CONST_INIT_LIFETIME = 10
 CONST_HEARTBEAT = '/lifetime.reset()'
 
 registrations = []
+threads = []
 
 def client_killer():
 	while 1:
@@ -19,7 +22,6 @@ def client_killer():
 			client, time = registration
 			if time > 0:
 				time -= 1
-				print("Server: %d" % (time))
 				registration = (client, time)
 				registrations.append(registration)
 			else:
@@ -42,17 +44,23 @@ def listen_to_client(client, addr):
 				print(msg)
 	finally:
 		client.close()
-		print("Server: %s has disconected" % client)
 
 
 def client_handler(sock):
-	threading.Thread(target=client_killer).start()
-	while 1:
-		# Accept connection request from client
-		client, addr = sock.accept()
-		registrations.append((client, CONST_INIT_LIFETIME))
-		print("Server: Connected with %s via port %d" % addr, flush=True)
-		threading.Thread(target=listen_to_client, args=(client, addr)).start()
+	thread1 = threading.Thread(target=client_killer)
+	thread1.start()
+	threads.append(thread1)
+	try:
+		while 1:
+			# Accept connection request from client
+			client, addr = sock.accept()
+			registrations.append((client, CONST_INIT_LIFETIME))
+			print("Server: Connected with %s via port %d" % addr, flush=True)
+			thread2 = threading.Thread(target=listen_to_client, args=(client, addr))
+			thread2.start()
+			threads.append(thread2)
+	finally:
+		sys.exit()
 
 
 # command line input
@@ -67,11 +75,21 @@ sock.listen(socket.SOMAXCONN)
 
 try:
 	while 1:
-		threading.Thread(target=client_handler, args=(sock,)).start()
+		thread = threading.Thread(target=client_handler, args=(sock,))
+		thread.start()
+		threads.append(thread)
+
 		# wait for command line input
 		cmd_line_input = input()
 		if cmd_line_input == 'close':
 			break
 finally:
+	for registration in registrations:
+		client, time = registration
+		client.shutdown(SHUT_RDWR)
+		client.close()
 	# close socket
 	sock.close()
+
+	os._exit(1)
+	

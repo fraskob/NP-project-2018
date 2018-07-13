@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import socket
 import threading
 
@@ -11,9 +12,14 @@ CONST_HEARTBEAT = '/lifetime.reset()'
 
 def heartbeat(sock):
 	while 1:
-		sock.send(CONST_HEARTBEAT.encode())
+		try:
+			sock.send(CONST_HEARTBEAT.encode())
+		except Exception as e:
+			# Not connected anymore
+			sock.close()
+			break
 		sleep(CONST_HEARTBEAT_RATE)
-		print('hearbeat')
+	os._exit(1)
 
 # commandline input
 target_host = sys.argv[1]
