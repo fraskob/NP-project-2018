@@ -11,6 +11,7 @@ from socket import SHUT_RDWR
 
 CONST_INIT_LIFETIME = 10
 CONST_HEARTBEAT = '/lifetime.reset()'
+CONST_INSTALL = '/install'
 CONST_UPDATE = '/update'
 CONST_UPGRADE = '/upgrade'
 
@@ -46,6 +47,18 @@ def update_paket_lists():
 	os.chdir('../')
 
 
+def send_paket(paket, client):
+	print('Send paket: %s' % paket)
+
+
+def send_update(paket, client):
+	print('Send update: %s' % paket)
+
+
+def send_upgrade(paket, client):
+	print('Send upgrade: %s' % paket)
+
+
 def client_killer():
 	while 1:
 		sleep(1)
@@ -73,10 +86,16 @@ def listen_to_client(client, addr):
 						registrations.append((client, CONST_INIT_LIFETIME))
 			elif len(msg) >= 7 and msg[:7] == CONST_UPDATE:
 				update_paket_lists()
-				paket_name = msg[8:]
+				paket = msg[8:]
+				send_update(paket, client)
 			elif len(msg) >= 8 and msg[:8] == CONST_UPGRADE:
 				update_paket_lists()
-				paket_name = msg[9:]
+				paket = msg[9:]
+				send_upgrade(paket, client)
+			elif len(msg) >= 8 and msg[:8] == CONST_INSTALL:
+				update_paket_lists()
+				paket = msg[9:]
+				send_paket(paket, client)
 			elif msg != '':
 				print(msg)
 	finally:

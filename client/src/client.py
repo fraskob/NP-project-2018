@@ -16,23 +16,48 @@ installed_pakets = []
 def update_installed_pakets():
 	os.chdir('./pakets')
 	for paket in glob.glob('*'):
-		pakets.append(paket)
+		installed_pakets.append(paket)
 	os.chdir('../')
 
 
-def install_paket(paket, sock):
+def install_paket(paket_name, sock):
 	update_installed_pakets()
-	pass
+	paket = ''
+	for pkt in installed_pakets:
+		if pkt[:len(paket_name)] == paket_name:
+			paket = pkt
+	if paket == '':
+		msg = '/install %s' % paket_name
+		sock.send(msg.encode())
+	else:
+		print('Paket %s is already installed' % paket_name)
 
 
-def upgrade_paket(paket, sock):
+def upgrade_paket(paket_name, sock):
 	update_installed_pakets()
-	pass
+	paket = ''
+	for pkt in installed_pakets:
+		if pkt[:len(paket_name)] == paket_name:
+			paket = pkt
+	if paket == '':
+		print('Paket %s is not installed' % paket_name)
+	else:
+		msg = '/upgrade %s' % paket
+		sock.send(msg.encode())
 
 
-def update_paket(paket, sock):
+
+def update_paket(paket_name, sock):
 	update_installed_pakets()
-	pass
+	paket = ''
+	for pkt in installed_pakets:
+		if pkt[:len(paket_name)] == paket_name:
+			paket = pkt
+	if paket == '':
+		print('Paket %s is not installed' % paket_name)
+	else:
+		msg = '/update %s' % paket
+		sock.send(msg.encode())
 
 
 def heartbeat(sock):
