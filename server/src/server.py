@@ -4,15 +4,47 @@ import socket
 import sys
 import threading
 import os
+import glob
 
 from time import sleep
 from socket import SHUT_RDWR
 
 CONST_INIT_LIFETIME = 10
 CONST_HEARTBEAT = '/lifetime.reset()'
+CONST_UPDATE = '/update'
+CONST_UPGRADE = '/upgrade'
 
 registrations = []
 threads = []
+pakets = []
+updates = []
+updates = []
+
+
+def update_paket_lists():
+	pakets = []
+	upgrades = []
+	updates = []
+	# pakets
+	os.chdir('./client pakets')
+	for file in glob.glob('*py'):
+		pakets.append(file)
+	# upgrades
+	os.chdir('../upgrades')
+	for paket in glob.glob('*'):
+		os.chdir(paket)
+		for file in glob.glob('*.py'):
+			upgrades.append(file)
+		os.chdir('../')
+	# updates
+	os.chdir('../updates')
+	for paket in glob.glob('*'):
+		os.chdir(paket)
+		for file in glob.glob('*.py'):
+			updates.append(file)
+		os.chdir('../')
+	os.chdir('../')
+
 
 def client_killer():
 	while 1:
@@ -39,7 +71,12 @@ def listen_to_client(client, addr):
 					if rclient == client:
 						registrations.remove(registration)
 						registrations.append((client, CONST_INIT_LIFETIME))
-
+			elif len(msg) >= 7 and msg[:7] == CONST_UPDATE:
+				update_paket_lists()
+				paket_name = msg[8:]
+			elif len(msg) >= 8 and msg[:8] == CONST_UPGRADE:
+				update_paket_lists()
+				paket_name = msg[9:]
 			elif msg != '':
 				print(msg)
 	finally:
