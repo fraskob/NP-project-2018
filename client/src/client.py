@@ -4,11 +4,36 @@ import sys
 import os
 import socket
 import threading
+import glob
 
 from time import sleep
 
 CONST_HEARTBEAT_RATE = 5
 CONST_HEARTBEAT = '/lifetime.reset()'
+
+installed_pakets = []
+
+def update_installed_pakets():
+	os.chdir('./pakets')
+	for paket in glob.glob('*'):
+		pakets.append(paket)
+	os.chdir('../')
+
+
+def install_paket(paket, sock):
+	update_installed_pakets()
+	pass
+
+
+def upgrade_paket(paket, sock):
+	update_installed_pakets()
+	pass
+
+
+def update_paket(paket, sock):
+	update_installed_pakets()
+	pass
+
 
 def heartbeat(sock):
 	while 1:
@@ -36,7 +61,16 @@ try:
 	while 1:
 		# wait for command line input
 		cmd_line_input = input()
-		if cmd_line_input == 'close':
+		if cmd_line_input[:7] == '/update':
+			paket_name = cmd_line_input[8:]
+			update_paket(paket_name, sock)
+		elif cmd_line_input[:8] == '/upgrade':
+			paket_name = cmd_line_input[9:]
+			upgrade_paket(paket_name, sock)
+		elif cmd_line_input[:8] == '/install':
+			paket_name = cmd_line_input[9:]
+			install_paket(paket_name, sock)
+		elif cmd_line_input == 'close':
 			break
 		else:
 			sock.send(cmd_line_input.encode())
