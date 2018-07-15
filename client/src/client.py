@@ -10,7 +10,7 @@ from time import sleep
 
 CONST_HEARTBEAT_RATE = 5
 CONST_HEARTBEAT = '/lifetime.reset()'
-CONST_CHUNK_SIZE = 8 * 1024
+CONST_BUFFER = 4096
 
 installed_pakets = []
 
@@ -60,15 +60,24 @@ def update_paket(paket_name, server_msg):
 		msg = '/update %s' % paket
 		server_msg.send(msg.encode())
 
-		answer = server_msg.recv(1023).decode('utf-8')
+		answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
 		print(answer)
 
 		while 1:
 			msg = input()
 			server_msg.send(msg.encode())
 			if msg == 'y':
-				# TODO RECEIVE FILE
+				file_name = server_msg.recv(CONST_BUFFER).decode('utf-8')
+
+				answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
+				os.chdir('./pakets')
+				for file in glob.glob('%s*' % paket_name):
+					os.remove(file)
+
+				with open(file_name, 'w') as file:
+					file.write(answer)
 				break
+				os.chdir('../')
 			elif msg == 'n':
 				break
 
@@ -100,6 +109,7 @@ server_heartbeat.connect(socket_address)
 server_heartbeat.send('heartbeat'.encode())
 
 threading.Thread(target=heartbeat, args=(server_heartbeat,)).start()
+
 
 try:
 	while 1:

@@ -14,6 +14,8 @@ CONST_HEARTBEAT = '/lifetime.reset()'
 CONST_INSTALL = '/install'
 CONST_UPDATE = '/update'
 CONST_UPGRADE = '/upgrade'
+CONST_BUFFER = 4096
+
 
 registrations = []
 threads = []
@@ -52,29 +54,36 @@ def send_paket(paket, client_msg):
 
 
 def send_update(paket, client_msg):
-	print('Send update: %s' % paket)
 	current_upgrade = int(paket[-6:-5])
 	current_update = int(paket[-4:-3])
 
 	latest_update = paket
 	for update in updates:
-		if int(update[-6:-5]) == current_upgrade and int(update[-4:-3]) > int(latest_update[-4:-3]):
+		if int(update[-6:-5]) == current_upgrade and int(update[-4:-3]) > int(latest_update[-4:-3]) and update[:-8] == paket[:-8]:
 			latest_update = update
 
 	if latest_update != paket:
 		msg = 'Your version:\t%s\nLatest version:\t%s\nDo you want to install the latest version of %s? (y/n)' % (paket, latest_update, paket[:-8])
 		client_msg.send(msg.encode())
 		while 1:
-			answer = client_msg.recv(1023).decode('utf-8')
+			answer = client_msg.recv(CONST_BUFFER).decode('utf-8')
 			if answer == 'y':
+				client_msg.send(latest_update.encode())
 				os.chdir('./updates/%s/' % paket[:-8])
-				# TODO: SEND FILE
+				with open(latest_update, 'rb') as file:
+					data = file.read(CONST_BUFFER)
+					while data:
+						client_msg.send(data)
+						print('.')
+						data = file.read(CONST_BUFFER)
+				os.chdir('../../')
 				break
 			elif answer == 'n':
 				break
 	else:
 		msg = '%s is up-to-date' % paket[:-8]
 		client_msg.send(msg.encode())
+
 
 def send_upgrade(paket, client_msg):
 	print('Send upgrade: %s' % paket)
@@ -96,7 +105,7 @@ def client_killer():
 
 def listen_to_hearbeat(client_hb):
 	while 1:
-		heartbeat = client_hb.recv(1023).decode('utf-8')
+		heartbeat = client_hb.recv(CONST_BUFFER).decode('utf-8')
 		if heartbeat == CONST_HEARTBEAT:
 			for registration in registrations:
 				client_msg, client_heartbeat, time = registration
@@ -109,7 +118,7 @@ def listen_to_hearbeat(client_hb):
 def listen_to_client(client_msg):
 	try:
 		while 1:
-			msg = client_msg.recv(1023).decode('utf-8')
+			msg = client_msg.recv(CONST_BUFFER).decode('utf-8')
 
 			if msg == CONST_HEARTBEAT:
 				for registration in registrations:
@@ -143,11 +152,11 @@ def client_handler(sock):
 		while 1:
 			# Accept connection request from client
 			client_msg, addr_msg = sock.accept()
-			flag1 = client_msg.recv(1023).decode('utf-8')
+			flag1 = client_msg.recv(CONST_BUFFER).decode('utf-8')
 			print("Server: Connected with %s via port %d [msg]" % addr_msg)
 			
 			client_heartbeat, addr_heartbeat = sock.accept()
-			flag2 = client_heartbeat.recv(1023).decode('utf-8')
+			flag2 = client_heartbeat.recv(CONST_BUFFER).decode('utf-8')
 			print("Server: Connected with %s via port %d [heartbeat]" % addr_heartbeat)
 			if flag1 == 'msg' and flag2 == 'heartbeat':
 				registrations.append((client_msg, client_heartbeat, CONST_INIT_LIFETIME))
@@ -171,6 +180,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 socket_address = (host, port)
 sock.bind(socket_address)
 sock.listen(socket.SOMAXCONN)
+
 
 try:
 	while 1:
