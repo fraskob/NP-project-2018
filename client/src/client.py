@@ -15,6 +15,9 @@ CONST_BUFFER = 4096
 installed_pakets = []
 
 def update_installed_pakets():
+	"""
+	Updates list of installed pakets.
+	"""
 	os.chdir('./pakets')
 	for paket in glob.glob('*'):
 		installed_pakets.append(paket)
@@ -22,6 +25,16 @@ def update_installed_pakets():
 
 
 def install_paket(paket_name, server_msg):
+	"""
+	Requests a paket which is not installed on the client from the server,
+	recveives it and installs it on the client. Does nothing if the paket
+	is already installed.
+
+	:packet_name:
+		Name of the paket to install
+	:server_msg:
+		Socket of server which provides the paket
+	"""
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -58,6 +71,16 @@ def install_paket(paket_name, server_msg):
 
 
 def upgrade_paket(paket_name, server_msg):
+	"""
+	Asks server if a newer version of the given paket is aviable. If the
+	server provides a newer version it sends the latest upgrade of paket.
+	This function does not update the loaded upgrade.
+
+	:paket_name:
+		Name of paket to upgrade
+	:server_msg:
+		Socket of server which provides upgrade
+	"""
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -93,6 +116,17 @@ def upgrade_paket(paket_name, server_msg):
 
 
 def update_paket(paket_name, server_msg):
+	"""
+	Asks server if a newer version of the given paket upgrade is aviable.
+	If the server provides a newer version it sends the latest update of
+	current paket upgrade. This function does only update the current
+	upgrade.
+
+	:paket_name:
+		Name of paket to update
+	:server_msg:
+		Socket of server which provides update
+	"""
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -127,6 +161,12 @@ def update_paket(paket_name, server_msg):
 
 
 def heartbeat(server_heartbeat):
+	"""
+	Sends a heartbeat message to the server in regulary intervalls.
+
+	:server_heartbeat:
+		Seperate socket to send heartbeat messages to server.
+	"""
 	while 1:
 		try:
 			server_heartbeat.send(CONST_HEARTBEAT.encode())

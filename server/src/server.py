@@ -25,6 +25,10 @@ updates = []
 
 
 def update_paket_lists():
+	"""
+	Updates the lists with currently aviable pakets, upgrades and updates
+	on the server by iterating over corresponding directories.
+	"""
 	global pakets
 	global upgrades
 	global updates
@@ -50,6 +54,14 @@ def update_paket_lists():
 
 
 def send_paket(paket, client_msg):
+	"""
+	Sends a requested paket to the client if aviable.
+
+	:paket:
+		Requested paket
+	:client_msg:
+		Socket of client which has requested the paket
+	"""
 	paket_exists = False
 	for p in pakets:
 		if p[:-8] == paket:
@@ -78,6 +90,15 @@ def send_paket(paket, client_msg):
 		client_msg.send(msg.encode())
 
 def send_update(paket, client_msg):
+	"""
+	Checks if an update for the given paket is aviable and sends
+	the latest update to the client.
+
+	:paket:
+		Paket that should be updated
+	:client_msg:
+		Socket of the client that has requested the update
+	"""
 	current_upgrade = int(paket[-6:-5])
 
 	latest_update = paket
@@ -108,6 +129,15 @@ def send_update(paket, client_msg):
 
 
 def send_upgrade(paket, client_msg):
+	"""
+	Checks if an upgrade for the given paket is aviable and sends
+	the latest upgrade to the client.
+
+	:paket:
+		Paket that should be upgraded
+	:client_msg:
+		Socket of the client that has requested the upgrade
+	"""
 	current_upgrade = int(paket[-6:-5])
 	current_update = int(paket[-4:-3])
 
@@ -139,6 +169,10 @@ def send_upgrade(paket, client_msg):
 
 
 def client_killer():
+	"""
+	Continuous decreases the life time of clients by one every second. If
+	the life time is equals zero the corresponding client will be ejected.
+	"""
 	while 1:
 		sleep(1)
 		for registration in registrations:
@@ -152,7 +186,16 @@ def client_killer():
 				client_heartbeat.close()
 				client_msg.close()
 
+
 def listen_to_hearbeat(client_hb):
+	"""
+	Continuous listen on heartbeat socket of connected client for
+	heartbeat messages. If a heartbeat is received the life time of the
+	corresponding client will be reset to initial life time.
+
+	:client_hb:
+		Seperate client socket for heartbeat messages
+	"""
 	while 1:
 		heartbeat = client_hb.recv(CONST_BUFFER).decode('utf-8')
 		if heartbeat == CONST_HEARTBEAT:
@@ -165,6 +208,13 @@ def listen_to_hearbeat(client_hb):
 
 
 def listen_to_client(client_msg):
+	"""
+	Continuous listens to given client socket for messages. Deals with
+	commands for the server and prints other received messages.
+
+	:clients_msg:
+		Message socket of corresponding client
+	"""
 	try:
 		while 1:
 			msg = client_msg.recv(CONST_BUFFER).decode('utf-8')
@@ -194,6 +244,13 @@ def listen_to_client(client_msg):
 
 
 def client_handler(sock):
+	"""
+	Accepts new client connections by setting up a message and a heartbeat
+	socket for every client.
+
+	:sock:
+		Main sock of server which receives connection requests from clients
+	"""
 	thread1 = threading.Thread(target=client_killer)
 	thread1.start()
 	threads.append(thread1)
