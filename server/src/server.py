@@ -50,8 +50,32 @@ def update_paket_lists():
 
 
 def send_paket(paket, client_msg):
-	print('Send paket: %s' % paket)
-
+	paket_exists = False
+	for p in pakets:
+		if p[:-8] == paket:
+			paket = p
+			paket_exists = True
+			break
+	if paket_exists:
+		msg = 'Do you want to install %s? (y/n)' % paket
+		client_msg.send(msg.encode())
+		while 1:
+			answer = client_msg.recv(CONST_BUFFER).decode('utf-8')
+			if answer == 'y':
+				client_msg.send(paket.encode())
+				os.chdir('./client pakets/')
+				with open(paket, 'rb') as file:
+					data = file.read(CONST_BUFFER)
+					while data:
+						client_msg.send(data)
+						data = file.read(CONST_BUFFER)
+				os.chdir('../')
+				break
+			elif answer == 'n':
+				break
+	else:
+		msg = 'Paket %s does not exist.' % paket
+		client_msg.send(msg.encode())
 
 def send_update(paket, client_msg):
 	current_upgrade = int(paket[-6:-5])

@@ -30,6 +30,29 @@ def install_paket(paket_name, server_msg):
 	if paket == '':
 		msg = '/install %s' % paket_name
 		server_msg.send(msg.encode())
+
+		answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
+		print(answer)
+
+		while 1:
+			msg = input()
+			server_msg.send(msg.encode())
+			if msg == 'y':
+				file_name = server_msg.recv(CONST_BUFFER).decode('utf-8')
+
+				answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
+				os.chdir('./pakets')
+				for file in glob.glob('%s*' % paket_name):
+					os.remove(file)
+
+				with open(file_name, 'w') as file:
+					file.write(answer)
+				os.chdir('../')
+				break
+			elif msg == 'n':
+				break
+
+
 	else:
 		print('Paket %s is already installed' % paket_name)
 
