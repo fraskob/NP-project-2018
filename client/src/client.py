@@ -20,7 +20,7 @@ def update_installed_pakets():
 	os.chdir('../')
 
 
-def install_paket(paket_name, sock):
+def install_paket(paket_name, server_msg):
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -33,7 +33,7 @@ def install_paket(paket_name, sock):
 		print('Paket %s is already installed' % paket_name)
 
 
-def upgrade_paket(paket_name, sock):
+def upgrade_paket(paket_name, server_msg):
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -47,7 +47,7 @@ def upgrade_paket(paket_name, sock):
 
 
 
-def update_paket(paket_name, sock):
+def update_paket(paket_name, server_msg):
 	update_installed_pakets()
 	paket = ''
 	for pkt in installed_pakets:
@@ -60,13 +60,13 @@ def update_paket(paket_name, sock):
 		sock.send(msg.encode())
 
 
-def heartbeat(sock):
+def heartbeat(server_heartbeat):
 	while 1:
 		try:
-			sock.send(CONST_HEARTBEAT.encode())
+			server_heartbeat.send(CONST_HEARTBEAT.encode())
 		except Exception as e:
 			# Not connected anymore
-			sock.close()
+			server_heartbeat.close()
 			break
 		sleep(CONST_HEARTBEAT_RATE)
 	os._exit(1)
@@ -76,11 +76,17 @@ target_host = sys.argv[1]
 target_port = int(sys.argv[2])
 
 # connect to server
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
 socket_address = (target_host, target_port)
-sock.connect(socket_address)
 
-threading.Thread(target=heartbeat, args=(sock,)).start()
+server_msg = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+server_msg.connect(socket_address)
+server_msg.send('msg'.encode())
+
+server_heartbeat = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+server_heartbeat.connect(socket_address)
+server_heartbeat.send('heartbeat'.encode())
+
+threading.Thread(target=heartbeat, args=(server_heartbeat,)).start()
 
 try:
 	while 1:
@@ -88,17 +94,18 @@ try:
 		cmd_line_input = input()
 		if cmd_line_input[:7] == '/update':
 			paket_name = cmd_line_input[8:]
-			update_paket(paket_name, sock)
+			update_paket(paket_name, server_msg)
 		elif cmd_line_input[:8] == '/upgrade':
 			paket_name = cmd_line_input[9:]
-			upgrade_paket(paket_name, sock)
+			upgrade_paket(paket_name, server_msg)
 		elif cmd_line_input[:8] == '/install':
 			paket_name = cmd_line_input[9:]
-			install_paket(paket_name, sock)
+			install_paket(paket_name, server_msg)
 		elif cmd_line_input == 'close':
 			break
 		else:
-			sock.send(cmd_line_input.encode())
+			server_msg.send(cmd_line_input.encode())
 finally:
 	# close connection
-	sock.close()
+	server_msg.close()
+	server_heartbeat.close()
