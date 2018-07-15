@@ -55,7 +55,6 @@ def send_paket(paket, client_msg):
 
 def send_update(paket, client_msg):
 	current_upgrade = int(paket[-6:-5])
-	current_update = int(paket[-4:-3])
 
 	latest_update = paket
 	for update in updates:
@@ -74,7 +73,6 @@ def send_update(paket, client_msg):
 					data = file.read(CONST_BUFFER)
 					while data:
 						client_msg.send(data)
-						print('.')
 						data = file.read(CONST_BUFFER)
 				os.chdir('../../')
 				break
@@ -86,7 +84,34 @@ def send_update(paket, client_msg):
 
 
 def send_upgrade(paket, client_msg):
-	print('Send upgrade: %s' % paket)
+	current_upgrade = int(paket[-6:-5])
+	current_update = int(paket[-4:-3])
+
+	latest_upgrade = paket
+	for upgrade in upgrades:
+		if int(upgrade[-6:-5]) > int(latest_upgrade[-6:-5]) and upgrade[:-8] == paket[:-8]:
+			latest_upgrade = upgrade
+
+	if latest_upgrade != paket:
+		msg = 'Your version:\t%s\nLatest version:\t%s\nDo you want to install the latest version of %s? (y/n)' % (paket, latest_upgrade, paket[:-8])
+		client_msg.send(msg.encode())
+		while 1:
+			answer = client_msg.recv(CONST_BUFFER).decode('utf-8')
+			if answer == 'y':
+				client_msg.send(latest_upgrade.encode())
+				os.chdir('./upgrades/%s/' % paket[:-8])
+				with open(latest_upgrade, 'rb') as file:
+					data = file.read(CONST_BUFFER)
+					while data:
+						client_msg.send(data)
+						data = file.read(CONST_BUFFER)
+				os.chdir('../../')
+				break
+			elif answer == 'n':
+				break
+	else:
+		msg = '%s is up-to-date' % paket[:-8]
+		client_msg.send(msg.encode())
 
 
 def client_killer():

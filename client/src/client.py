@@ -46,6 +46,27 @@ def upgrade_paket(paket_name, server_msg):
 		msg = '/upgrade %s' % paket
 		server_msg.send(msg.encode())
 
+		answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
+		print(answer)
+
+		while 1:
+			msg = input()
+			server_msg.send(msg.encode())
+			if msg == 'y':
+				file_name = server_msg.recv(CONST_BUFFER).decode('utf-8')
+
+				answer = server_msg.recv(CONST_BUFFER).decode('utf-8')
+				os.chdir('./pakets')
+				for file in glob.glob('%s*' % paket_name):
+					os.remove(file)
+
+				with open(file_name, 'w') as file:
+					file.write(answer)
+				os.chdir('../')
+				break
+			elif msg == 'n':
+				break
+
 
 
 def update_paket(paket_name, server_msg):
@@ -76,8 +97,8 @@ def update_paket(paket_name, server_msg):
 
 				with open(file_name, 'w') as file:
 					file.write(answer)
-				break
 				os.chdir('../')
+				break
 			elif msg == 'n':
 				break
 
