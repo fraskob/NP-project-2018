@@ -10,6 +10,7 @@ from time import sleep
 
 CONST_HEARTBEAT_RATE = 5
 CONST_HEARTBEAT = '/lifetime.reset()'
+CONST_CHUNK_SIZE = 8 * 1024
 
 installed_pakets = []
 
@@ -28,7 +29,7 @@ def install_paket(paket_name, server_msg):
 			paket = pkt
 	if paket == '':
 		msg = '/install %s' % paket_name
-		sock.send(msg.encode())
+		server_msg.send(msg.encode())
 	else:
 		print('Paket %s is already installed' % paket_name)
 
@@ -43,7 +44,7 @@ def upgrade_paket(paket_name, server_msg):
 		print('Paket %s is not installed' % paket_name)
 	else:
 		msg = '/upgrade %s' % paket
-		sock.send(msg.encode())
+		server_msg.send(msg.encode())
 
 
 
@@ -57,7 +58,19 @@ def update_paket(paket_name, server_msg):
 		print('Paket %s is not installed' % paket_name)
 	else:
 		msg = '/update %s' % paket
-		sock.send(msg.encode())
+		server_msg.send(msg.encode())
+
+		answer = server_msg.recv(1023).decode('utf-8')
+		print(answer)
+
+		while 1:
+			msg = input()
+			server_msg.send(msg.encode())
+			if msg == 'y':
+				# TODO RECEIVE FILE
+				break
+			elif msg == 'n':
+				break
 
 
 def heartbeat(server_heartbeat):

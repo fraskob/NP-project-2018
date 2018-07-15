@@ -18,14 +18,14 @@ CONST_UPGRADE = '/upgrade'
 registrations = []
 threads = []
 pakets = []
-updates = []
+upgrades = []
 updates = []
 
 
 def update_paket_lists():
-	pakets = []
-	upgrades = []
-	updates = []
+	global pakets
+	global upgrades
+	global updates
 	# pakets
 	os.chdir('./client pakets')
 	for file in glob.glob('*py'):
@@ -53,7 +53,28 @@ def send_paket(paket, client_msg):
 
 def send_update(paket, client_msg):
 	print('Send update: %s' % paket)
+	current_upgrade = int(paket[-6:-5])
+	current_update = int(paket[-4:-3])
 
+	latest_update = paket
+	for update in updates:
+		if int(update[-6:-5]) == current_upgrade and int(update[-4:-3]) > int(latest_update[-4:-3]):
+			latest_update = update
+
+	if latest_update != paket:
+		msg = 'Your version:\t%s\nLatest version:\t%s\nDo you want to install the latest version of %s? (y/n)' % (paket, latest_update, paket[:-8])
+		client_msg.send(msg.encode())
+		while 1:
+			answer = client_msg.recv(1023).decode('utf-8')
+			if answer == 'y':
+				os.chdir('./updates/%s/' % paket[:-8])
+				# TODO: SEND FILE
+				break
+			elif answer == 'n':
+				break
+	else:
+		msg = '%s is up-to-date' % paket[:-8]
+		client_msg.send(msg.encode())
 
 def send_upgrade(paket, client_msg):
 	print('Send upgrade: %s' % paket)
@@ -65,7 +86,6 @@ def client_killer():
 		for registration in registrations:
 			registrations.remove(registration)
 			client_msg, client_heartbeat, time = registration
-			print(time)
 			if time > 0:
 				time -= 1
 				registration = (client_msg, client_heartbeat, time)
