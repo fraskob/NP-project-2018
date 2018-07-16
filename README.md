@@ -2,6 +2,7 @@
 Final project: 'Netzwerk Programmierung'
 
 # USAGE
+
 Server:
 The server needs to be started befor the client. You can do that by going to
 .../NP-project-2018/server/src and typing './server.py host port'. As host you
@@ -29,3 +30,10 @@ type something the client will send it as message to the server.
 
 Pakets which are installed on the client are saved in 
 NP-project-2018/client/src/pakets/
+
+
+Pakets:
+All paketnames have the form [name]_v[x].[y].py with
+name: name of the paket
+x: upgrade of the paket
+y: update of the paket
