@@ -366,6 +366,9 @@ socket_address = (host, port)
 sock.bind(socket_address)
 sock.listen(socket.SOMAXCONN)
 
+# Print welcome message
+print('Welcome to Server!\n')
+
 try:
 	while 1:
 		thread = threading.Thread(target=client_handler, args=(sock,))

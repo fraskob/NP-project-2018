@@ -297,6 +297,9 @@ def heartbeat(server_heartbeat):
 		sleep(CONST_HEARTBEAT_RATE)
 
 def print_help():
+	"""
+	Prints out help dialogue
+	"""
 	print("""
 |-- /update [paket name]
 |   Checks if there is an update for given paket aviable. If there
@@ -311,6 +314,9 @@ def print_help():
 |
 |-- /uninstall [packet name]
 |   Uninstall given paket.
+|
+|-- /close
+|   Closes the client
 |
 |-- /h or /help
 |   Prints this.
@@ -336,9 +342,13 @@ server_heartbeat.send('heartbeat'.encode())
 # Starts hearbeat function in seperate thread
 threading.Thread(target=heartbeat, args=(server_heartbeat,)).start()
 
+# Print welcome message
+print('Welcome to Client!\n\nType \'/help\' for help\n')
 
 try:
 	while 1:
+		# Print promt
+		print('client: ', end='')
 		# wait for command line input and parse over client functions
 		cmd_line_input = input()
 		if cmd_line_input[:7] == '/update':
@@ -355,7 +365,7 @@ try:
 			uninstall_paket(paket_name)
 		elif cmd_line_input == '/h' or cmd_line_input == '/help':
 			print_help()
-		elif cmd_line_input == 'close':
+		elif cmd_line_input == '/close':
 			# Close this client
 			break
 		else:
