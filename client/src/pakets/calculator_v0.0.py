@@ -2,7 +2,7 @@
 
 import os
 
-CONST_VERSION = 'v3.3'
+CONST_VERSION = 'v0.0'
 
 os.system('clear')
 print('Welcome to calculator %s\n\nPlease enter your FIRST number:' % CONST_VERSION)
@@ -12,4 +12,4 @@ second = int(input())
 result = first + second
 os.system('clear')
 print('Welcome to calculator %s\n\n' % CONST_VERSION)
-print(' %d\n+%d\n---------------------------------------\n %d' % (first, second, result))
+print(' %d\n+%d\n---------------------------------------\n %d' % (first, second, result))f

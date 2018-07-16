@@ -12,4 +12,4 @@ second = int(input())
 result = first + second
 os.system('clear')
 print('Welcome to calculator %s\n\n' % CONST_VERSION)
-print(' %d\n+%d\n---------------------------------------\n %d' % (first, second, result))
+print(' %d\n+%d\n---------------------------------------\n %d' % (first, second, result))f

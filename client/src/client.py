@@ -30,6 +30,7 @@ def update_installed_pakets():
 	"""
 	# Clear list
 	global installed_pakets
+	installed_pakets = []
 	os.chdir('./pakets')
 	# Iterate over all pakets in the paket directory of the client
 	for paket in glob.glob('*'):
@@ -44,8 +45,8 @@ def install_paket(paket_name, server_msg):
 	recveives it and installs it on the client. Does nothing if the paket
 	is already installed.
 
-	:type packet_name: string
-	:param packet_name: Name of the paket to install
+	:type paket_name: string
+	:param paket_name: Name of the paket to install
 
 	:type server_msg: socket
 	:param server_msg: Socket of server which provides the paket
@@ -91,6 +92,7 @@ def install_paket(paket_name, server_msg):
 				with open(file_name, 'w') as file:
 					file.write(answer)
 				os.chdir('../')
+				print('%s installed' % paket_name)
 				break
 			elif msg == 'n':
 				# Do not install paket
@@ -162,6 +164,7 @@ def upgrade_paket(paket_name, server_msg):
 				with open(file_name, 'w') as file:
 					file.write(answer)
 				os.chdir('../')
+				print('%s upgraded' % packet_name)
 				break
 			elif msg == 'n':
 				# Do not install latest upgrade
@@ -230,9 +233,49 @@ def update_paket(paket_name, server_msg):
 				with open(file_name, 'w') as file:
 					file.write(answer)
 				os.chdir('../')
+				print('%s updated' % packet_name)
 				break
 			elif msg == 'n':
 				# Do not install latest update
+				break
+
+def uninstall_paket(paket_name):
+	"""
+	Uninstalls an installed paket.
+
+	:type paket_name: string
+	:param paket_name: name of paket
+	"""
+
+	update_installed_pakets()
+	paket = ''
+	for pkt in installed_pakets:
+		if pkt[:len(paket_name)] == paket_name:
+			paket = pkt
+	if paket == '':
+		# Paket is not installed
+
+		print('Paket %s is not installed' % paket_name)
+	else:
+		# Paket is installed
+
+		# Ask user if he wants to uninstall the paket
+		print('Do you realy want to uninstall %s? (y/n)' % paket_name)
+		while 1:
+			# Wait for user to answer
+			answer = input()
+			if answer == 'y':
+				# User wants to uninstall paket
+
+				# Delete paket from paket directory
+				os.chdir('./pakets')
+				for file in glob.glob('%s*' % paket_name):
+					os.remove(file)
+				print('Paket %s uninstalled' % paket_name)
+				os.chdir('../')
+				break
+			elif answer == 'n':
+				# User does not want to uninstall paket
 				break
 
 
@@ -253,6 +296,25 @@ def heartbeat(server_heartbeat):
 			break
 		sleep(CONST_HEARTBEAT_RATE)
 
+def print_help():
+	print("""
+|-- /update [paket name]
+|   Checks if there is an update for given paket aviable. If there
+|   is an update you can load and install it from the server.
+|
+|-- /upgrade [packet name]
+|   Checks if there is an upgrade for given paket aviable. If there
+|   is an upgrade you can load and install it from the server.
+|
+|-- /install [packet name]
+|   Load and install given paket from server.
+|
+|-- /uninstall [packet name]
+|   Uninstall given paket.
+|
+|-- /h or /help
+|   Prints this.
+	""")
 
 # commandline parameters
 target_host = sys.argv[1]
@@ -288,6 +350,11 @@ try:
 		elif cmd_line_input[:8] == '/install':
 			paket_name = cmd_line_input[9:]
 			install_paket(paket_name, server_msg)
+		elif cmd_line_input[:10] == '/uninstall':
+			paket_name = cmd_line_input[11:]
+			uninstall_paket(paket_name)
+		elif cmd_line_input == '/h' or cmd_line_input == '/help':
+			print_help()
 		elif cmd_line_input == 'close':
 			# Close this client
 			break

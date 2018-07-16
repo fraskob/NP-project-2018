@@ -269,6 +269,7 @@ def listen_to_hearbeat(client_hb, client_id):
 					registrations.remove(registration)
 					registrations.append((cid, client_msg, client_heartbeat, time))
 	except OSError as e:
+		# Connection to client lost
 		client_hb.close()
 		print('Server: Client(%d) has disconnected' % client_id)
 		
@@ -302,6 +303,7 @@ def listen_to_client(client_msg, client_id):
 			elif msg != '':
 				print(msg)
 	except OSError as e:
+		# Connection to client lost
 		client_msg.close()
 
 
