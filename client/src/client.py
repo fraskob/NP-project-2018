@@ -164,7 +164,7 @@ def upgrade_paket(paket_name, server_msg):
 				with open(file_name, 'w') as file:
 					file.write(answer)
 				os.chdir('../')
-				print('%s upgraded' % packet_name)
+				print('%s upgraded' % paket_name)
 				break
 			elif msg == 'n':
 				# Do not install latest upgrade
@@ -217,7 +217,6 @@ def update_paket(paket_name, server_msg):
 
 			if msg == 'y':
 				# install latest update
-
 				# Receive full file name of update from server
 				file_name = server_msg.recv(CONST_BUFFER).decode('utf-8')
 
@@ -233,7 +232,7 @@ def update_paket(paket_name, server_msg):
 				with open(file_name, 'w') as file:
 					file.write(answer)
 				os.chdir('../')
-				print('%s updated' % packet_name)
+				print('%s updated' % paket_name)
 				break
 			elif msg == 'n':
 				# Do not install latest update
