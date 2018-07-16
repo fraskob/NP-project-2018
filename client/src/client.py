@@ -298,3 +298,4 @@ finally:
 	# close connections
 	server_msg.close()
 	server_heartbeat.close()
+	os._exit(1)

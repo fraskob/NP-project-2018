@@ -29,7 +29,7 @@ registrations = []
 pakets = []
 upgrades = []
 updates = []
-
+client_id = 0
 
 def update_paket_lists():
 	"""
@@ -221,6 +221,7 @@ def client_killer():
 	Continuous decreases the life time of clients by one every second. If
 	the life time is equals zero the corresponding client will be ejected.
 	"""
+	global registrations
 	while 1:
 		# Execute every second
 		sleep(1)
@@ -228,12 +229,12 @@ def client_killer():
 		for registration in registrations:
 			# Delete current client from list
 			registrations.remove(registration)
-			client_msg, client_heartbeat, time = registration
+			cid, client_msg, client_heartbeat, time = registration
 			if time > 0:
 				# Client has time left
 				time -= 1
 				# decrease time by one
-				registration = (client_msg, client_heartbeat, time)
+				registration = (cid, client_msg, client_heartbeat, time)
 				# Add client with upgraded time back to list
 				registrations.append(registration)
 			else:
@@ -242,7 +243,7 @@ def client_killer():
 				client_msg.close()
 
 
-def listen_to_hearbeat(client_hb):
+def listen_to_hearbeat(client_hb, client_id):
 	"""
 	Continuous listen on heartbeat socket of connected client for
 	heartbeat messages. If a heartbeat is received the life time of the
@@ -260,19 +261,19 @@ def listen_to_hearbeat(client_hb):
 
 				# find corresponding client in registration list
 				for registration in registrations:
-					client_msg, client_heartbeat, time = registration
+					cid, client_msg, client_heartbeat, time = registration
 					if client_heartbeat == client_hb:
 						# Reset lifetime of client to init lifetime
 						time = CONST_INIT_LIFETIME
 					# Update client time in list
 					registrations.remove(registration)
-					registrations.append((client_msg, client_heartbeat, time))
+					registrations.append((cid, client_msg, client_heartbeat, time))
 	except OSError as e:
 		client_hb.close()
-		print('Server: %s has disconnected' % client_hb)
+		print('Server: Client(%d) has disconnected' % client_id)
 		
 
-def listen_to_client(client_msg):
+def listen_to_client(client_msg, client_id):
 	"""
 	Continuous listens to given client socket for messages. Deals with
 	commands for the server and prints other received messages.
@@ -284,16 +285,9 @@ def listen_to_client(client_msg):
 		while 1:
 			# Wait for messages from client
 			msg = client_msg.recv(CONST_BUFFER).decode('utf-8')
-
 			# Parse received message over server commands; If message is no command
 			# print the message
-			if msg == CONST_HEARTBEAT:
-				for registration in registrations:
-					rclient, time = registration
-					if rclient == client_msg:
-						registrations.remove(registration)
-						registrations.append((client_msg, CONST_INIT_LIFETIME))
-			elif len(msg) >= 7 and msg[:7] == CONST_UPDATE:
+			if len(msg) >= 7 and msg[:7] == CONST_UPDATE:
 				update_paket_lists()
 				paket = msg[8:]
 				send_update(paket, client_msg)
@@ -308,9 +302,7 @@ def listen_to_client(client_msg):
 			elif msg != '':
 				print(msg)
 	except OSError as e:
-		pass
 		client_msg.close()
-		print('Server: %s has disconnected' % client_msg)
 
 
 def client_handler(sock):
@@ -324,6 +316,10 @@ def client_handler(sock):
 
 	# Start client_killer in seperate threat to continuous controll the client
 	# lifetimes
+
+	global client_id
+	global registrations
+
 	thread1 = threading.Thread(target=client_killer)
 	thread1.start()
 	try:
@@ -332,25 +328,27 @@ def client_handler(sock):
 			# socket for messages
 			client_msg, addr_msg = sock.accept()
 			flag1 = client_msg.recv(CONST_BUFFER).decode('utf-8')
-			print("Server: Connected with %s via port %d [msg]" % addr_msg)
+			print("Connected with %s via port %d [msg]" % addr_msg)
 			
 			# socket for heartbeat
 			client_heartbeat, addr_heartbeat = sock.accept()
 			flag2 = client_heartbeat.recv(CONST_BUFFER).decode('utf-8')
-			print("Server: Connected with %s via port %d [heartbeat]" % addr_heartbeat)
+			print("Connected with %s via port %d [heartbeat]" % addr_heartbeat)
 
 			if flag1 == 'msg' and flag2 == 'heartbeat':
 				# Client has a message and a heartbeat socket
 
 				# Register client by adding him to registration list
-				registrations.append((client_msg, client_heartbeat, CONST_INIT_LIFETIME))
-				
+				registrations.append((client_id, client_msg, client_heartbeat, CONST_INIT_LIFETIME))
+				print('Client registered with id %d' % client_id)
+				client_id += 1
+
 				# Start listening for heartbeats in seperate thread
-				thread2 = threading.Thread(target=listen_to_hearbeat, args=(client_heartbeat,))
+				thread2 = threading.Thread(target=listen_to_hearbeat, args=(client_heartbeat, client_id))
 				thread2.start()
 
 				# Start listening for messages in seperate thread
-				thread3 = threading.Thread(target=listen_to_client, args=(client_msg,))
+				thread3 = threading.Thread(target=listen_to_client, args=(client_msg, client_id))
 				thread3.start()
 	finally:
 		sys.exit()
@@ -366,7 +364,6 @@ socket_address = (host, port)
 sock.bind(socket_address)
 sock.listen(socket.SOMAXCONN)
 
-
 try:
 	while 1:
 		thread = threading.Thread(target=client_handler, args=(sock,))
@@ -377,12 +374,8 @@ try:
 		if cmd_line_input == 'close':
 			break
 finally:
-	for registration in registrations:
-		client, time = registration
-		client.shutdown(SHUT_RDWR)
-		client.close()
 	# close socket
 	sock.close()
-
+	# Terminate server
 	os._exit(1)
 	
